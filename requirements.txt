@@ -1,0 +1,9 @@
+docxtpl==0.20.1
+langchain-gigachat==0.3.12
+langgraph==0.6.6
+pydantic==2.11.7
+pydantic-settings==2.10.1
+pydantic_core==2.33.2
+python-docx==1.2.0
+python-dotenv==1.1.1
+requests==2.32.4
