@@ -9,7 +9,7 @@ from docxtpl import DocxTemplate
 from langchain_gigachat.tools.giga_tool import giga_tool
 from pydantic import Field
 
-from tools.schemas import Employee
+from tools.schemas import EmployeeForInfoList, EmployeeForOrderB
 
 
 def get_current_date() -> str:
@@ -32,20 +32,20 @@ def get_current_date() -> str:
     return formatted_date
 
 
-def set_paragraph_align(cell):
+def set_paragraph_align(cell, font_size):
     for paragraph in cell.paragraphs:
         paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
         for run in paragraph.runs:
             run.font.name = "Times New Roman"
-            run.font.size = Pt(14)
+            run.font.size = Pt(font_size)
 
 
-def set_paragraph_left(cell):
+def set_paragraph_left(cell, font_size):
     for paragraph in cell.paragraphs:
         paragraph.alignment = WD_ALIGN_PARAGRAPH.LEFT
         for run in paragraph.runs:
             run.font.name = "Times New Roman"
-            run.font.size = Pt(14)
+            run.font.size = Pt(font_size)
 
 
 create_work_permit_examples = [
@@ -119,36 +119,42 @@ create_info_list_examples = [
     {
         "request": "создай лист ознакомления для Иванова Ивана Иваныча, механника 2 категории, база топлива - Центральная",
         "params": {
-            "list_of_employees": [Employee(name="Иванов Иван Иванович", job_title="механник 2 категории", baza="Центральная")]
+            "list_of_employees": [
+                EmployeeForInfoList(name="Иванов Иван Иванович", job_title="механник 2 категории", baza="Центральная")]
         }
     },
     {
         "request": "создай лист ознакомления для Иванова Ивана Иваныча и Петрова Константина Семеновича, сливщиков-разливщиков, база топлива - Северная",
         "params": {
-            "list_of_employees": [Employee(name="Иванов Иван Иванович", job_title="сливщик-разливщик", baza="Северная"),
-                                  Employee(name="Петров Константин Семенович", job_title="сливщик-разливщик", baza="Северная")]
+            "list_of_employees": [
+                EmployeeForInfoList(name="Иванов Иван Иванович", job_title="сливщик-разливщик", baza="Северная"),
+                EmployeeForInfoList(name="Петров Константин Семенович", job_title="сливщик-разливщик",
+                                    baza="Северная")]
         }
     },
     {
         "request": "создай лист ознакомления для следующих работников Иванова Ивана Иваныча главного инженера ОДКБ-5, Петрова Константина Семеновича водителя Главная",
         "params": {
-            "list_of_employees": [Employee(name="Иванов Иван Иванович", job_title="главный инженер", baza="ОДКБ-5"),
-                                  Employee(name="Петров Константин Семенович", job_title="водитель", baza="Главная")]
+            "list_of_employees": [
+                EmployeeForInfoList(name="Иванов Иван Иванович", job_title="главный инженер", baza="ОДКБ-5"),
+                EmployeeForInfoList(name="Петров Константин Семенович", job_title="водитель", baza="Главная")]
         }
     },
     {
         "request": "создай лист ознакомления для следующих бухгалтеров Иванова Ивана Иваныча, Кривоножко Светланы Геннадьевны, Смирнова Петра Степановича с Южной базы",
         "params": {
-            "list_of_employees": [Employee(name="Иванов Иван Иванович", job_title="бухгалтер", baza="Южная"),
-                                  Employee(name="Кривоножко Светлана Геннадьевна", job_title="бухгалтер", baza="Южная"),
-                                  Employee(name="Смирнов Петр Степанович", job_title="бухгалтер", baza="Южная")]
+            "list_of_employees": [EmployeeForInfoList(name="Иванов Иван Иванович", job_title="бухгалтер", baza="Южная"),
+                                  EmployeeForInfoList(name="Кривоножко Светлана Геннадьевна", job_title="бухгалтер",
+                                                      baza="Южная"),
+                                  EmployeeForInfoList(name="Смирнов Петр Степанович", job_title="бухгалтер",
+                                                      baza="Южная")]
         }
     },
 ]
 
 
 @giga_tool(few_shot_examples=create_work_permit_examples)
-def create_info_list(list_of_employees: List[Employee] = Field(description="Список сотрудников")) -> str:
+def create_info_list(list_of_employees: List[EmployeeForInfoList] = Field(description="Список сотрудников")) -> str:
     """
     Создание документа "Лист ознакомления" для нескольких сотрудников.
     :param list_of_employees: Список сотрудников, в которых содержится ФИО сотрудника, должность и его топливная база
@@ -165,14 +171,117 @@ def create_info_list(list_of_employees: List[Employee] = Field(description="Сп
         row[2].text = row_data.job_title
         row[3].text = row_data.baza
         # Оформление
-        row[0].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        row[1].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        row[2].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        row[3].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
-        set_paragraph_align(row[0])
-        set_paragraph_left(row[1])
-        set_paragraph_align(row[2])
-        set_paragraph_align(row[3])
+        for i in range(4):
+            row[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+
+        set_paragraph_align(row[0], 14)
+        set_paragraph_left(row[1], 14)
+        set_paragraph_align(row[2], 14)
+        set_paragraph_align(row[3], 14)
 
     doc.save("./results/Лист ознакомления.docx")
     return "Лист ознакомления успешно создан!"
+
+
+create_order_b_examples = [
+    {
+        "request": "создай приказ Б для Иванова Ивана Иваныча, номер 46539685, даты обучения 14.05.25, 15.05.25, 16.05.25, дата проверки знаний 20.05.25",
+        "params": {
+            "list_of_employees": [
+                EmployeeForOrderB(surname='Иванов',
+                                  name='Иван',
+                                  patronymic='Иванович',
+                                  number='46539685',
+                                  dates_of_training=['14.05.25', '15.05.25', '16.05.25'],
+                                  knowledge_test_date='20.05.25')
+            ],
+            "data_of_training": '20 мая 2025 г.'
+        }
+    },
+    {
+        "request": "создай приказ Б для Смирнова Бориса Степановича 94985674 даты обучения 20.06.25 23.06.25 25.06.25,"
+                   "Птички Светланы Валерьевны 85734598 21.06.25 24.06.25 26.06.25 и дата проверки знаний 30.06.25",
+        "params": {
+            "list_of_employees": [
+                EmployeeForOrderB(surname='Смирнов',
+                                  name='Борис',
+                                  patronymic='Степанович',
+                                  number='94985674',
+                                  dates_of_training=['20.06.25', '23.06.25', '25.06.25'],
+                                  knowledge_test_date='30.06.25'),
+                EmployeeForOrderB(surname='Птичка',
+                                  name='Светлана',
+                                  patronymic='Валерьевна',
+                                  number='85734598',
+                                  dates_of_training=['21.06.25', '24.06.25', '26.06.25'],
+                                  knowledge_test_date='30.06.25')
+            ],
+            "data_of_training": '30 июня 2025 г.'
+        }
+    },
+    {
+        "request": "приказ Б Гусева Анна Павловна 56784563 01.06.25 02.06.25",
+        "params": {
+            "list_of_employees": [
+                EmployeeForOrderB(surname='Гусева',
+                                  name='Анна',
+                                  patronymic='Павловна',
+                                  number='56784563',
+                                  dates_of_training=['01.06.25'],
+                                  knowledge_test_date='02.06.25')
+            ],
+            "data_of_training": '2 июня 2025 г.'
+        }
+    },
+    {
+        "request": "оформи приказ Б Литвенко Глеб Кириллович 94859245 18.03.25, 19.03.25, 20.03.25",
+        "params": {
+            "list_of_employees": [
+                EmployeeForOrderB(surname='Литвенко',
+                                  name='Глеб',
+                                  patronymic='Кириллович',
+                                  number='94859245',
+                                  dates_of_training=['18.03.25', '19.03.25'],
+                                  knowledge_test_date='20.03.25')
+            ],
+            "data_of_training": '20 марта 2025 г.'
+        }
+    },
+]
+
+
+@giga_tool(few_shot_examples=create_order_b_examples)
+def create_order_b(list_of_employees: List[EmployeeForOrderB] = Field(description="Список сотрудников"),
+                   data_of_training: str = Field(description="Дата проведения обучения")) -> str:
+    """
+    Создание приказа "Б" для сотрудников.
+    :param list_of_employees: Список сотрудников, в которых содержится ФИО сотрудника, табельный номер, даты обучения сотрудника и дата проверки знаний сотрудника
+    :param data_of_training: Дата проведения обучения
+    :return: Ответ в виде строки
+    """
+    doc = Document("./templates/order_b.docx")
+    table = doc.tables[1]
+
+    for row_num, row_data in enumerate(list_of_employees, 1):
+        row = table.add_row().cells
+        # Вставка данных
+        row[0].text = str(row_num)
+        row[1].text = row_data.surname
+        row[2].text = row_data.name
+        row[3].text = row_data.patronymic
+        row[4].text = row_data.number
+        row[5].text = "\n".join(row_data.dates_of_training)
+        row[6].text = row_data.knowledge_test_date
+        # Оформление
+        for i in range(7):
+            row[i].vertical_alignment = WD_ALIGN_VERTICAL.CENTER
+            set_paragraph_align(row[i], 12)
+
+    doc.save(f"./results/Приказ СПб ОДМС-3-58 от {data_of_training}.docx")
+    doc = DocxTemplate(f"./results/Приказ СПб ОДМС-3-58 от {data_of_training}.docx")
+    context = {
+        'data_of_training': data_of_training
+    }
+    doc.render(context)
+    doc.save(f"./results/Приказ СПб ОДМС-3-58 от {data_of_training}.docx")
+    return "Приказ СПб ОДМС-3-58 успешно создан!"
